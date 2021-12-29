@@ -1,5 +1,3 @@
-import argparse
-import csv
 import datetime
 import itertools
 import os
@@ -17,12 +15,6 @@ from typing import Pattern
 from typing import Tuple
 
 import pandas as pd
-import pydantic
-from rich import print
-
-import model_atom
-import model_intellij
-import model_vscode
 
 # GLOBAL VARIABLES
 ERROR_FOLDER: str = ""
@@ -45,12 +37,18 @@ NT_filename_errors = namedtuple(
 		"error_task_origin",
 	]
 )
+NT_output_filename = namedtuple(
+	"NT_filename_output",
+	[
+		"output_filename",
+	]
+)
 
 
 def log_error(
-		error: str,
-		log: bool = False,
-		bool_suppress_print: bool = False,
+	error: str,
+	log: bool = False,
+	bool_suppress_print: bool = False,
 ) -> None:
 	global ERROR_LIST
 	if error:
@@ -63,7 +61,7 @@ def log_error(
 
 
 def set_error_folder(
-		error_folder: str,
+	error_folder: str,
 ) -> None:
 	global ERROR_FOLDER
 	ERROR_FOLDER = error_folder
@@ -71,7 +69,7 @@ def set_error_folder(
 
 
 def set_error_file_origin(
-		file_origin: str,
+	file_origin: str,
 ) -> None:
 	global ERROR_FILE_ORIGIN
 	ERROR_FILE_ORIGIN = file_origin
@@ -79,7 +77,7 @@ def set_error_file_origin(
 
 
 def set_error_task_origin(
-		task_origin: str,
+	task_origin: str,
 ) -> None:
 	global ERROR_TASK_ORIGIN
 	ERROR_TASK_ORIGIN = task_origin
@@ -88,10 +86,10 @@ def set_error_task_origin(
 
 
 def write_errors_to_disk(
-		clear_task_origin: bool = True,
-		folder_error: str = ERROR_FOLDER,
-		bool_suppress_print: bool = False,
-		overwrite: bool = True,
+	clear_task_origin: bool = True,
+	folder_error: str = ERROR_FOLDER,
+	bool_suppress_print: bool = False,
+	overwrite: bool = True,
 ) -> None:
 	global ERROR_LIST
 	if not folder_error:
@@ -146,10 +144,10 @@ def write_errors_to_disk(
 
 
 def generate_filename(
-		nt_filename: tuple,
-		extension: str,
-		delimiter: str = "",
-		folder: str = "",
+	nt_filename: tuple,
+	extension: str,
+	delimiter: str = "",
+	folder: str = "",
 ) -> str:
 	output: str = delimiter.join(nt_filename)
 	if folder:
@@ -160,11 +158,11 @@ def generate_filename(
 
 
 def parse_filename(
-		filename: str,
-		delimiter: str,
-		named_tuple,  # NamedTuple annotation doesn't work when using it as a callable
-		extension: str = "",
-		dt_dict: Dict[str, Any] = None,
+	filename: str,
+	delimiter: str,
+	named_tuple,  # NamedTuple annotation doesn't work when using it as a callable
+	extension: str = "",
+	dt_dict: Dict[str, Any] = None,
 ) -> tuple:
 	if extension:
 		filename = filename.replace(extension, "")
@@ -204,8 +202,8 @@ def parse_filename(
 
 
 def cast(
-		cast_object: Any,
-		cast_type: str,
+	cast_object: Any,
+	cast_type: str,
 ) -> Any:
 	if cast_type == "str":
 		return str(cast_object)
@@ -221,7 +219,7 @@ def cast(
 
 
 def flatten_list(
-		list_of_lists: List[List[Any]],
+	list_of_lists: List[List[Any]],
 ) -> List[Any]:
 	item: Any
 	sublist: List[Any]
@@ -234,8 +232,8 @@ def flatten_list(
 
 
 def filter_list_strings(
-		list_strings: Iterable[str],
-		list_string_filter_conditions: Tuple[str, ...] = (),
+	list_strings: Iterable[str],
+	list_string_filter_conditions: Tuple[str, ...] = (),
 ) -> Iterable[str]:
 	if len(list_string_filter_conditions) > 0:
 		list_strings = filter(
@@ -250,7 +248,7 @@ def filter_list_strings(
 
 
 def is_single_item(
-		list_items: List[Any],
+	list_items: List[Any],
 ) -> bool:
 	match len(list_items):
 		case 0:
@@ -264,7 +262,7 @@ def is_single_item(
 
 
 def generate_sub_paths_for_folder(
-		folder: str,
+	folder: str,
 ) -> None:
 	directories: List[str] = folder.split("/")
 	recursive_sub_directories: Iterator[str] = itertools.accumulate(
@@ -278,12 +276,12 @@ def generate_sub_paths_for_folder(
 
 
 def import_paths_from_folder(
-		folder: str,
-		list_paths_filter_conditions: Tuple[str, ...] = (),
-		check_paths: bool = False,
-		include_files: bool = True,
-		include_folders: bool = False,
-		ignore_hidden: bool = True,
+	folder: str,
+	list_paths_filter_conditions: Tuple[str, ...] = (),
+	check_paths: bool = False,
+	include_files: bool = True,
+	include_folders: bool = False,
+	ignore_hidden: bool = True,
 ) -> Generator[str, None, List[str]]:
 	if os.path.exists(folder):
 		list_function_checks_all_true: List[Callable] = []
@@ -336,8 +334,8 @@ def import_paths_from_folder(
 
 
 def import_single_file(
-		folder: str,
-		list_filename_filter_conditions: Tuple[str, ...],
+	folder: str,
+	list_filename_filter_conditions: Tuple[str, ...],
 ) -> str:
 	filename: str
 	list_rest: List[str]
@@ -369,70 +367,6 @@ def set_pandas_options():
 	pd.set_option('display.width', 1000)
 
 
-NT_output_filename = namedtuple(
-	"NT_filename_output",
-	[
-		"output_filename",
-	]
-)
-PLATFORM_DICT: Dict[str, object] = {
-	model_vscode.PLATFORM: model_vscode.Model,
-	model_atom.PLATFORM:   model_atom.Model,
-	model_intellij.PLATFORM: model_intellij.Model,
-}
-
-
-def main():
-	parser: argparse.ArgumentParser = argparse.ArgumentParser(
-		description="Parsing Configuration files"
-	)
-	parser.add_argument(
-		"platform",
-		type=str,
-		help="Platform e.g. vs_code",
-	)
-	parser.add_argument(
-		"output_dir",
-		type=str,
-		help="Directory to output updated Warp themes.",
-	)
-	args = parser.parse_args()
-	output_folder: str = args.output_dir
-	generate_sub_paths_for_folder(output_folder)
-
-	platform: str = args.platform
-	platform_modeler: pydantic.BaseModel = PLATFORM_DICT.get(platform, None)
-	if not platform_modeler:
-		print(f"Platform not found: {platform}")
-		exit()
-
-	filename: str = import_single_file(
-		folder=platform,
-		list_filename_filter_conditions=(platform,),
-	)
-	model = platform_modeler.parse_file(os.path.join(platform, filename))
-	data = model.data()
-	del model
-	dataframe: pd.DataFrame = pd.DataFrame(
-		data,
-	)
-	set_pandas_options()
-	print(dataframe)
-	output_filename = NT_output_filename(
-		output_filename=platform,
-	)
-	# noinspection PyTypeChecker
-	dataframe.to_csv(
-		path_or_buf=generate_filename(
-			nt_filename=output_filename,
-			extension=".csv",
-			folder=output_folder,
-		),
-		index=False,
-		quoting=csv.QUOTE_ALL,
-		escapechar="\\",
-	)
-
-
 if __name__ == "__main__":
-	main()
+	print("Not meant to be run as a standalone script. Exiting.")
+	exit()
