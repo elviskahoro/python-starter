@@ -1,48 +1,41 @@
-import argparse
-from pydantic import BaseModel
+from config import settings
+import csv
+import pydantic
 
 from python_starter.python_starter import *
 
+DATA: str = "data"
+OUTPUT: str = "output"
 
 
 def main():
 	set_pandas_options()
-	parser: argparse.ArgumentParser = argparse.ArgumentParser(
-		description="Parsing Configuration files"
-	)
-	parser.add_argument(
-		"input_dir",
-		type=str,
-		help="argument",
-	)
-	parser.add_argument(
-		"output_dir",
-		type=str,
-		help="Directory to output updated Warp themes.",
-	)
-	args = parser.parse_args()
-	output_folder: str = args.output_dir
+
+	input_folder: str = settings.input_directory
+	output_folder: str = settings.output_directory
 	generate_sub_paths_for_folder(output_folder)
 
-	f = open()
-	parse_file()
-
-	input_dir: str = args.input_dir
-
-	
 	filename: str = import_single_file(
-		folder=platform,
-		list_filename_filter_conditions=(platform,),
+		folder=input_folder,
+		list_filename_filter_conditions=(
+			settings.filter_conditions,
+		),
 	)
-	model = platform_modeler.parse_file(os.path.join(platform, filename))
+	model = pydantic.BaseModel.parse_file(
+		os.path.join(
+			input_folder,
+			filename,
+		)
+	)
 	data = model.data()
 	del model
 	dataframe: pd.DataFrame = pd.DataFrame(
 		data,
 	)
+
 	print(dataframe)
 	output_filename = NT_output_filename(
-		output_filename=platform,
+		output_filename=settings.output_filename,
 	)
 	# noinspection PyTypeChecker
 	dataframe.to_csv(
@@ -58,4 +51,4 @@ def main():
 
 
 if __name__ == "__main__":
-	mopen()
+	open()
