@@ -39,6 +39,7 @@ NT_output_filename = namedtuple(
     "NT_filename_output",
     [
         "output_filename",
+        "extension",
     ],
 )
 
@@ -143,15 +144,43 @@ def write_errors_to_disk(
 
 def generate_filename(
     nt_filename: tuple,
-    extension: str,
+    extension: str = "",
     delimiter: str = "",
     folder: str = "",
 ) -> str:
-    output: str = delimiter.join(nt_filename)
+    filename_extension: str
+    filename_without_extension: Tuple[str, ...]
+    try:
+        filename_extension = nt_filename.extension
+        filename_without_extension = tuple(x for x in nt_filename if x != filename_extension)
+    except AttributeError as err:
+        log_error(
+            error=str(err),
+        )
+        filename_extension = ""
+        filename_without_extension: Tuple[str, ...] = nt_filename
+
+    def check_extension(f_ext, ext) -> str:
+        match f_ext, ext:
+            case "", ext:
+                return ext
+            case f_ext, "":
+                return f_ext
+            case f_ext, ext:
+                if f_ext == ext:
+                    return f_ext
+                else:
+                    log_error(
+                        error=f"Mismatch between filename_extension: {f_ext} and extension: {ext}"
+                        )
+                    return ""
+
+    filename_extension = check_extension(filename_extension, extension)
+    output: str = delimiter.join(filename_without_extension)
     if folder:
         output = folder + output
-    if extension:
-        output = output + extension
+    if filename_extension:
+        output = output + filename_extension
     return output
 
 
