@@ -33,12 +33,6 @@ NT_filename_errors = namedtuple(
     [
         "error_file_origin",
         "error_task_origin",
-    ],
-)
-NT_output_filename = namedtuple(
-    "NT_filename_output",
-    [
-        "output_filename",
         "extension",
     ],
 )
@@ -48,6 +42,7 @@ def log_error(
     error: str,
     log: bool = False,
     bool_suppress_print: bool = False,
+    should_exit: bool = False,
 ) -> None:
     global ERROR_LIST
     if error:
@@ -57,6 +52,9 @@ def log_error(
             print(f"{log} : {error}")
         else:
             print(f"{error} : {error}")
+    if should_exit:
+        write_errors_to_disk()
+        exit(1)
 
 
 def set_error_folder(
@@ -110,10 +108,10 @@ def write_errors_to_disk(
         nt_filename=NT_filename_errors(
             error_file_origin=error_file_origin,
             error_task_origin=error_task_origin,
+            extension=".txt",
         ),
         delimiter="-",
         folder=folder_error,
-        extension=".txt",
     )
     output_write_type: str
     if overwrite:
@@ -144,7 +142,6 @@ def write_errors_to_disk(
 
 def generate_filename(
     nt_filename: tuple,
-    extension: str = "",
     delimiter: str = "",
     folder: str = "",
 ) -> str:
@@ -160,22 +157,7 @@ def generate_filename(
         filename_extension = ""
         filename_without_extension: Tuple[str, ...] = nt_filename
 
-    def check_extension(f_ext, ext) -> str:
-        match f_ext, ext:
-            case "", ext:
-                return ext
-            case f_ext, "":
-                return f_ext
-            case f_ext, ext:
-                if f_ext == ext:
-                    return f_ext
-                else:
-                    log_error(
-                        error=f"Mismatch between filename_extension: {f_ext} and extension: {ext}"
-                        )
-                    return ""
-
-    filename_extension = check_extension(filename_extension, extension)
+    print(f"delimiter: {delimiter}")
     output: str = delimiter.join(filename_without_extension)
     if folder:
         output = folder + output
@@ -187,20 +169,59 @@ def generate_filename(
 def parse_filename(
     filename: str,
     delimiter: str,
-    named_tuple,  # NamedTuple annotation doesn't work when using it as a callable
-    extension: str = "",
+    the_named_tuple: NamedTuple,  # NamedTuple annotation doesn't work when using it as a callable
     dt_dict: Dict[str, Any] = None,
 ) -> tuple:
-    if extension:
-        filename = filename.replace(extension, "")
-    split_filename: List[str] = filename.split(delimiter)
-    parsed_filename: NamedTuple
-    try:
-        parsed_filename = named_tuple(*split_filename)
-    except TypeError:
-        error: str = "parse_filename-" "named_tuple_size_mismatch-" "filename"
-        parsed_filename = NT_error(error)
-        log_error(error=error)
+    set_error_task_origin("parse_filename")
+    filename_without_extension: str = ""
+    extension: str
+    named_tuple_with_extension = the_named_tuple
+    if not filename:
+        raise f"filename_is_empty-{filename}"
+    else:
+        print(filename.split("."))
+        match filename.split("."):
+            case f, first_period, *multiple_periods, extension:
+                if multiple_periods:
+                    log_error(
+                        error=f"filename_contains_multiple_periods-{filename}",
+                        should_exit=True,
+                    )
+            case f, e if e:
+                if "extension" not in the_named_tuple._fields:
+                    log_error(
+                        error=f"named_tuple_generator_is_missing_extensions_field-{the_named_tuple}",
+                        should_exit=True,
+                    )
+
+                filename_without_extension = f
+                extension = e
+                # todo
+
+            case _, _:
+                log_error(
+                    error=f"Unmatched_case-{filename}",
+                    should_exit=True,
+                )
+
+    if not delimiter:
+        try:
+            return named_tuple_with_extension(filename_without_extension)
+        except TypeError:
+            log_error(
+                error=f"named_tuple_size_mismatch_without_delimiter-{filename}",
+                should_exit=True,
+            )
+    else:
+        split_filename: List[str] = filename_without_extension.split(delimiter)
+        try:
+            parsed_filename: NamedTuple = named_tuple_with_extension(*split_filename)
+        except TypeError:
+            log_error(
+                error=f"named_tuple_size_mismatch_with_deliiter-{filename}",
+                should_exit=True,
+            )
+
     if dt_dict:
         # noinspection PyProtectedMember
         parsed_filename_dict: Dict[str, Any] = parsed_filename._asdict()
@@ -219,7 +240,7 @@ def parse_filename(
                 list_casted_data.append(casted_value)
             else:
                 list_casted_data.append(value)
-        return named_tuple(*list_casted_data)
+        return the_named_tuple(*list_casted_data)
     else:
         return parsed_filename
 
@@ -363,10 +384,6 @@ def import_single_file(
     folder: str,
     list_filename_filter_conditions: Tuple[str, ...],
 ) -> str:
-    """
-
-    :rtype: object
-    """
     filename: str
     list_rest: List[str]
     list_filenames: List[str] = list(
@@ -378,7 +395,7 @@ def import_single_file(
     single_file: bool = is_single_item(list_filenames)
     if not single_file:
         log_error(
-            error=(f"parse_filename-" f"{'_'.join(list_filename_filter_conditions)}"),
+            error=f"parse_filename-" f"{'_'.join(list_filename_filter_conditions)}",
         )
         return ""
     else:
@@ -389,5 +406,29 @@ def import_single_file(
 
 
 if __name__ == "__main__":
-    print("Not meant to be run as a standalone script. Exiting.")
-    exit()
+    def partially_completed_named_tuple_generator(
+        from_tuple: NamedTuple,
+        defaults: dict,
+    ):
+        print(from_tuple._asdict())
+
+
+    NT_test = namedtuple(
+        "NT_filename_errors",
+        [
+            "error_file_origin",
+            "error_task_origin",
+            "extension",
+        ],
+
+    )
+    namedtuple('Node', fields, defaults=(None,) * len(fields))
+    nt_test = NT_test("file_origin", "task_origin", ".txt")
+    partially_completed_named_tuple_generator(from_tuple=nt_test)
+    # named_tuple_with_extension = namedtuple(the_named_tuple(extension=extension))
+    #
+    #
+    # parse_filename("test.txt", "", NT_filename_errors)
+    # parse_filename("a.b.txt", "", NT_filename_errors)
+    # print("Not meant to be run as a standalone script. Exiting.")
+    # exit()
