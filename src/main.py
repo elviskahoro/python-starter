@@ -2,7 +2,7 @@ from config import settings
 import csv
 import pydantic
 
-from python_starter.python_starter import *
+from python_starter import *
 
 DATA: str = "data"
 OUTPUT: str = "output"
