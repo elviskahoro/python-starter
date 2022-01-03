@@ -454,6 +454,6 @@ def parse_filename(
 
 
 if __name__ == "__main__":
-    set_error_file_origin(os.path.basename(__file__))
+    set_error_file_origin(os.path.basename(__file__).rstrip(".py"))
     set_error_task_origin("main")
     log_error(error=f"Not meant to be run as a file. Aborting script.", should_exit=True)
