@@ -1,3 +1,0 @@
-[submodule "dataklasses"]
-	path = dataklasses
-	url = git@github.com:dabeaz/dataklasses.git
