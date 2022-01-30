@@ -18,9 +18,9 @@ def main():
 
     data_directory: str = settings.data_directory
 
-    level_0 = settings.level_0
-    for task_name in level_0:
-        task_data = level_0.get(task_name)
+    tasks = settings.tasks
+    for task_name in tasks:
+        task_data = tasks.get(task_name)
         if not task_data:
             continue
 
