@@ -1,6 +1,6 @@
 # all directories should have a trailing forward slash /
-error_directory = "./logs/"
-data_directory = "./data/"
+error_directory = "./../logs/"
+data_directory = "./../data/"
 
 
 [tasks]
