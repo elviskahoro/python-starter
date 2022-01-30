@@ -3,19 +3,13 @@ error_directory = "./logs/"
 data_directory = "./data/"
 
 
-[level_0]
+[tasks]
 
-[level_0.level_1]
-model_output_filename = "changelog.md"
+[tasks.task_1]
+model_output_filename = "task_1.md"
 model_output_directory = "./help/"
-models = ["changelog"]
-markdown_header = """\
-# Changelog
+models = ["task_1"]
 
-These are our release changelogs. We try to release an update every week on Warp Wednesday!
-
-"""
-
-[level_0.level_1.level_2]
-model_module_name = "model_channel_versions"
-data_filter_conditions = ["channel_versions"]
+[tasks.task_1.model]
+model_module_name = "model_front"
+data_filter_conditions = ["filter_conditions_for_data_filename_for_task_1"]

@@ -2,7 +2,7 @@
 name = "python_starter"
 version = "0.1.0"
 description = ""
-authors = ["elvis kahoro <ekk0809@gmail.com>"]
+authors = ["elvis kahoro <elvis@warp.dev>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
